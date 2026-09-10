@@ -56,4 +56,25 @@ export class PostsController {
   };
 }
 
+ // READ - Semua Post
+  getPosts = async (req: Request, res: Response) => {
+    try {
+      const posts = await db.select().from(postsTable);
+
+      return res.status(200).json({
+        success: true,
+        message: "Berhasil mengambil semua data",
+        data: {
+          posts: posts,
+        },
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: "Gagal mengambil data",
+        error: error instanceof Error ? error.message : error,
+      });
+    }
+  };
+
 export default new PostsController();
