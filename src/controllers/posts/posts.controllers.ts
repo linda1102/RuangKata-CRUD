@@ -66,6 +66,43 @@ export class PostsController {
     }
   };
 
+   // READ - Semua Post
+  getPosts = async (req: Request, res: Response) => {
+    try {
+      const posts = await db
+        .select({
+          id: postsTable.id,
+          userId: postsTable.userId,
+          categoryId: postsTable.categoryId,
+          category: categoryTable.name,
+          title: postsTable.title,
+          content: postsTable.content,
+          status: postsTable.status,
+          author: postsTable.author,
+          createdAt: postsTable.createdAt,
+          updateAt: postsTable.updateAt,
+        })
+        .from(postsTable)
+        .leftJoin(
+          categoryTable,
+          eq(postsTable.categoryId, categoryTable.id)
+        );
+
+      return res.status(200).json({
+        success: true,
+        message: "Berhasil mengambil semua data",
+        data: {
+          posts,
+        },
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: "Gagal mengambil data",
+        error: error instanceof Error ? error.message : error,
+      });
+    }
+  };
 }
 
 export default new PostsController();
