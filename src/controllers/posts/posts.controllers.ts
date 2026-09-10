@@ -54,9 +54,8 @@ export class PostsController {
       });
     }
   };
-}
 
- // READ - Semua Post
+  // READ - Semua Post
   getPosts = async (req: Request, res: Response) => {
     try {
       const posts = await db.select().from(postsTable);
@@ -76,5 +75,37 @@ export class PostsController {
       });
     }
   };
+
+  // READ - Post berdasarkan ID
+  getPostById = async (req: Request, res: Response) => {
+    try {
+      const id = Number(req.params.id);
+
+      const post = await db
+        .select()
+        .from(postsTable)
+        .where(eq(postsTable.id, id));
+
+      if (post.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: "Data tidak ditemukan",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Berhasil mengambil data",
+        data: post[0],
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: "Gagal mengambil data",
+        error: error instanceof Error ? error.message : error,
+      });
+    }
+  };
+}
 
 export default new PostsController();
