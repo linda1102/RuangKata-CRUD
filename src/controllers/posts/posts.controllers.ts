@@ -11,14 +11,8 @@ export class PostsController {
     try {
       const validateData = createPostSchema.parse(req.body);
 
-      const {
-        userId,
-        categoryId,
-        title,
-        content,
-        author,
-        status,
-      } = validateData;
+      const { userId, categoryId, title, content, author, status } =
+        validateData;
 
       let imageUrl: string | undefined;
       let imagePublicId: string | undefined;
@@ -66,7 +60,7 @@ export class PostsController {
     }
   };
 
-   // READ - Semua Post
+  // READ - Semua Post
   getPosts = async (req: Request, res: Response) => {
     try {
       const posts = await db
@@ -83,10 +77,7 @@ export class PostsController {
           updateAt: postsTable.updateAt,
         })
         .from(postsTable)
-        .leftJoin(
-          categoryTable,
-          eq(postsTable.categoryId, categoryTable.id)
-        );
+        .leftJoin(categoryTable, eq(postsTable.categoryId, categoryTable.id));
 
       return res.status(200).json({
         success: true,
@@ -94,6 +85,48 @@ export class PostsController {
         data: {
           posts,
         },
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: "Gagal mengambil data",
+        error: error instanceof Error ? error.message : error,
+      });
+    }
+  };
+
+  // READ - Post berdasarkan ID
+  getPostById = async (req: Request, res: Response) => {
+    try {
+      const id = Number(req.params.id);
+
+      const post = await db
+        .select({
+          id: postsTable.id,
+          userId: postsTable.userId,
+          categoryId: postsTable.categoryId,
+          category: categoryTable.name,
+          title: postsTable.title,
+          content: postsTable.content,
+          status: postsTable.status,
+          author: postsTable.author,
+          createdAt: postsTable.createdAt,
+          updateAt: postsTable.updateAt,
+        })
+        .from(postsTable)
+        .leftJoin(categoryTable, eq(postsTable.categoryId, categoryTable.id))
+        .where(eq(postsTable.id, id));
+      if (post.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: "Data tidak ditemukan",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Berhasil mengambil data",
+        data: post[0],
       });
     } catch (error) {
       return res.status(500).json({
