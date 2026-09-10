@@ -136,6 +136,48 @@ export class PostsController {
       });
     }
   };
+
+  // UPDATE
+  updatePost = async (req: Request, res: Response) => {
+    try {
+      const id = Number(req.params.id);
+
+      const { userId, categoryId, title, content, author, status } = req.body;
+
+      let image: string | undefined;
+
+      if (req.file) {
+        const uploadResult = await uploadCloudinary(req.file.buffer);
+        image = uploadResult.secure_url;
+      }
+
+      await db
+        .update(postsTable)
+        .set({
+          userId: userId ? Number(userId) : undefined,
+          categoryId: categoryId ? Number(categoryId) : undefined,
+          title,
+          content,
+          author,
+          status,
+          ...(image && { image }),
+        })
+        .where(eq(postsTable.id, id));
+
+      return res.status(200).json({
+        success: true,
+        message: "Data berhasil diupdate",
+      });
+    } catch (error) {
+      console.error("Update post error:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Gagal mengupdate data",
+        error: error instanceof Error ? error.message : error,
+      });
+    }
+  };
 }
 
 export default new PostsController();
