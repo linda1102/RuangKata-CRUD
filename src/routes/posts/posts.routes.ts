@@ -8,7 +8,7 @@ const router = Router();
 router.post('/' ,uploadSingleImage, PostsController.createPost); // create
 router.get('/' , PostsController.getPosts); // ngambil data
 router.get('/:id', PostsController.getPostById); // ngambil data berdasarkan id
-router.put('/:id', PostsController.updatePost); // update
-router.delete('/:id', PostsController.deletePost); // delete
+router.put("/:id", uploadSingleImage, PostsController.updatePost); // update berdasarkan id
+router.delete('/:id', PostsController.deletePost); // delete berdasarkan id
 
 export default router;

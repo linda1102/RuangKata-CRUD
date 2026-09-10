@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { createPostSchema } from "../../validations/posts.validations";
 import { db } from "../../config/db";
-import { postsTable } from "../../config/schema";
+import { postsTable, categoryTable } from "../../config/schema";
 import { eq } from "drizzle-orm";
 import { uploadCloudinary } from "../../services/cloudinary.services";
 
@@ -10,13 +10,22 @@ export class PostsController {
   createPost = async (req: Request, res: Response) => {
     try {
       const validateData = createPostSchema.parse(req.body);
-      const { title, content, categoryId, author } = validateData;
+
+      const {
+        userId,
+        categoryId,
+        title,
+        content,
+        author,
+        status,
+      } = validateData;
 
       let imageUrl: string | undefined;
       let imagePublicId: string | undefined;
 
       if (req.file) {
         const uploadResult = await uploadCloudinary(req.file.buffer);
+
         imageUrl = uploadResult.secure_url;
         imagePublicId = uploadResult.public_id;
       }
@@ -24,12 +33,14 @@ export class PostsController {
       const [insertedPost] = await db
         .insert(postsTable)
         .values({
+          userId,
+          categoryId,
           title,
           content,
           author,
+          status,
           imageUrl,
           imagePublicId,
-          categoryId,
         })
         .$returningId();
 
@@ -58,13 +69,30 @@ export class PostsController {
   // READ - Semua Post
   getPosts = async (req: Request, res: Response) => {
     try {
-      const posts = await db.select().from(postsTable);
+      const posts = await db
+        .select({
+          id: postsTable.id,
+          userId: postsTable.userId,
+          categoryId: postsTable.categoryId,
+          category: categoryTable.name,
+          title: postsTable.title,
+          content: postsTable.content,
+          status: postsTable.status,
+          author: postsTable.author,
+          createdAt: postsTable.createdAt,
+          updateAt: postsTable.updateAt,
+        })
+        .from(postsTable)
+        .leftJoin(
+          categoryTable,
+          eq(postsTable.categoryId, categoryTable.id)
+        );
 
       return res.status(200).json({
         success: true,
         message: "Berhasil mengambil semua data",
         data: {
-          posts: posts,
+          posts,
         },
       });
     } catch (error) {
@@ -82,8 +110,23 @@ export class PostsController {
       const id = Number(req.params.id);
 
       const post = await db
-        .select()
+        .select({
+          id: postsTable.id,
+          userId: postsTable.userId,
+          categoryId: postsTable.categoryId,
+          category: categoryTable.name,
+          title: postsTable.title,
+          content: postsTable.content,
+          status: postsTable.status,
+          author: postsTable.author,
+          createdAt: postsTable.createdAt,
+          updateAt: postsTable.updateAt,
+        })
         .from(postsTable)
+        .leftJoin(
+          categoryTable,
+          eq(postsTable.categoryId, categoryTable.id)
+        )
         .where(eq(postsTable.id, id));
 
       if (post.length === 0) {
@@ -112,26 +155,42 @@ export class PostsController {
     try {
       const id = Number(req.params.id);
 
-      const { title, content, author, categoryId } = req.body;
+      const {
+        userId,
+        categoryId,
+        title,
+        content,
+        author,
+        status,
+      } = req.body;
+
+      let image: string | undefined;
+
+      if (req.file) {
+        const uploadResult = await uploadCloudinary(req.file.buffer);
+        image = uploadResult.secure_url;
+      }
 
       await db
         .update(postsTable)
         .set({
+          userId: userId ? Number(userId) : undefined,
+          categoryId: categoryId ? Number(categoryId) : undefined,
           title,
           content,
           author,
-          categoryId: Number(categoryId),
+          status,
+          ...(image && { image }),
         })
         .where(eq(postsTable.id, id));
 
-        return res.status(200).json({
-            success: true,
-            message: "Data berhasil diupdate",
-        });
-
+      return res.status(200).json({
+        success: true,
+        message: "Data berhasil diupdate",
+      });
     } catch (error) {
-     console.error("Update post error:", error);
-     
+      console.error("Update post error:", error);
+
       return res.status(500).json({
         success: false,
         message: "Gagal mengupdate data",
@@ -140,13 +199,14 @@ export class PostsController {
     }
   };
 
-  
   // DELETE
   deletePost = async (req: Request, res: Response) => {
     try {
       const id = Number(req.params.id);
 
-      await db.delete(postsTable).where(eq(postsTable.id, id));
+      await db
+        .delete(postsTable)
+        .where(eq(postsTable.id, id));
 
       return res.status(200).json({
         success: true,
@@ -156,6 +216,29 @@ export class PostsController {
       return res.status(500).json({
         success: false,
         message: "Gagal menghapus data",
+        error: error instanceof Error ? error.message : error,
+      });
+    }
+  };
+
+  // CATEGORY
+  getCategories = async (req: Request, res: Response) => {
+    try {
+      const categories = await db
+        .select()
+        .from(categoryTable);
+
+      return res.status(200).json({
+        success: true,
+        message: "Berhasil mengambil category",
+        data: {
+          categories,
+        },
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: "Gagal mengambil category",
         error: error instanceof Error ? error.message : error,
       });
     }
