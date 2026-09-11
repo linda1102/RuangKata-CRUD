@@ -11,8 +11,13 @@ export class PostsController {
     try {
       const validateData = createPostSchema.parse(req.body);
 
-      const { userId, categoryId, title, content, author, status } =
-        validateData;
+      const {
+        categoryId,
+        title,
+        content,
+        author,
+        status,
+      } = validateData;
 
       let imageUrl: string | undefined;
       let imagePublicId: string | undefined;
@@ -27,7 +32,6 @@ export class PostsController {
       const [insertedPost] = await db
         .insert(postsTable)
         .values({
-          userId,
           categoryId,
           title,
           content,
@@ -64,20 +68,23 @@ export class PostsController {
   getPosts = async (req: Request, res: Response) => {
     try {
       const posts = await db
-        .select({
-          id: postsTable.id,
-          userId: postsTable.userId,
-          categoryId: postsTable.categoryId,
-          category: categoryTable.name,
-          title: postsTable.title,
-          content: postsTable.content,
-          status: postsTable.status,
-          author: postsTable.author,
-          createdAt: postsTable.createdAt,
-          updateAt: postsTable.updateAt,
-        })
-        .from(postsTable)
-        .leftJoin(categoryTable, eq(postsTable.categoryId, categoryTable.id));
+      .select({
+        id: postsTable.id,
+        categoryId: postsTable.categoryId,
+        category: categoryTable.name,
+        title: postsTable.title,
+        content: postsTable.content,
+        status: postsTable.status,
+        author: postsTable.author,
+        imageUrl: postsTable.imageUrl,
+        createdAt: postsTable.createdAt,
+        updateAt: postsTable.updateAt,
+      })
+      .from(postsTable)
+      .leftJoin(
+        categoryTable,
+        eq(postsTable.categoryId, categoryTable.id)
+  );
 
       return res.status(200).json({
         success: true,
@@ -103,19 +110,23 @@ export class PostsController {
       const post = await db
         .select({
           id: postsTable.id,
-          userId: postsTable.userId,
           categoryId: postsTable.categoryId,
           category: categoryTable.name,
           title: postsTable.title,
           content: postsTable.content,
           status: postsTable.status,
           author: postsTable.author,
+          imageUrl: postsTable.imageUrl,
           createdAt: postsTable.createdAt,
           updateAt: postsTable.updateAt,
         })
         .from(postsTable)
-        .leftJoin(categoryTable, eq(postsTable.categoryId, categoryTable.id))
+        .leftJoin(
+          categoryTable,
+          eq(postsTable.categoryId, categoryTable.id)
+        )
         .where(eq(postsTable.id, id));
+
       if (post.length === 0) {
         return res.status(404).json({
           success: false,
@@ -142,7 +153,13 @@ export class PostsController {
     try {
       const id = Number(req.params.id);
 
-      const { userId, categoryId, title, content, author, status } = req.body;
+      const {
+        categoryId,
+        title,
+        content,
+        author,
+        status,
+      } = req.body;
 
       let image: string | undefined;
 
@@ -154,13 +171,12 @@ export class PostsController {
       await db
         .update(postsTable)
         .set({
-          userId: userId ? Number(userId) : undefined,
           categoryId: categoryId ? Number(categoryId) : undefined,
           title,
           content,
           author,
           status,
-          ...(image && { image }),
+          ...(image && { imageUrl: image }),
         })
         .where(eq(postsTable.id, id));
 
@@ -184,7 +200,9 @@ export class PostsController {
     try {
       const id = Number(req.params.id);
 
-      await db.delete(postsTable).where(eq(postsTable.id, id));
+      await db
+        .delete(postsTable)
+        .where(eq(postsTable.id, id));
 
       return res.status(200).json({
         success: true,
@@ -202,7 +220,9 @@ export class PostsController {
   // CATEGORY
   getCategories = async (req: Request, res: Response) => {
     try {
-      const categories = await db.select().from(categoryTable);
+      const categories = await db
+        .select()
+        .from(categoryTable);
 
       return res.status(200).json({
         success: true,
@@ -216,7 +236,7 @@ export class PostsController {
         success: false,
         message: "Gagal mengambil category",
         error: error instanceof Error ? error.message : error,
-      });
+      });             
     }
   };
 }

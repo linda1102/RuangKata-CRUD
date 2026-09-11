@@ -13,23 +13,25 @@ export const categoryTable = mysqlTable("category", {
 // POST
 export const postsTable = mysqlTable("post", {
   id: int("id").autoincrement().primaryKey(),
-  userId: int("user_id").notNull(),
+
   categoryId: int("category_id")
     .notNull()
     .references(() => categoryTable.id, {
       onDelete: "restrict",
       onUpdate: "cascade",
     }),
+
   title: varchar("title", { length: 225 }).notNull(),
   content: text("content").notNull(),
   author: varchar("author", { length: 100 }).notNull(),
-  imageUrl: text("image_url"), // Kolom untuk simpan URL gambar
-  imagePublicId: varchar("image_public_id", { length: 255 }), // Kolom untuk simpan Public ID Cloudinary
 
+  imageUrl: text("image_url"),
+  imagePublicId: varchar("image_public_id", { length: 255 }),
 
-  status: mysqlEnum("status", POST_STATUS).notNull().default("published"),
+  status: mysqlEnum("status", ["delete", "published"])
+    .notNull()
+    .default("published"),
 
   createdAt: timestamp("created_at").defaultNow(),
-
   updateAt: timestamp("update_at").defaultNow().onUpdateNow(),
 });
