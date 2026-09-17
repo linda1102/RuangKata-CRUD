@@ -250,6 +250,8 @@ export class PostsController {
     }
   };
 
+  
+
 }
 
 export default new PostsController();
