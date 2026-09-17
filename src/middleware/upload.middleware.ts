@@ -1,17 +1,36 @@
 import multer from "multer";
 
+// Menyimpan file sementara di memory
 const storage = multer.memoryStorage();
 
-export const uploadSingleImage = multer({
+// Filter file yang diupload
+const fileFilter = (
+  req: Express.Request,
+  file: Express.Multer.File,
+  cb: multer.FileFilterCallback,
+) => {
+  // Hanya menerima file gambar
+  if (file.mimetype.startsWith("image/")) {
+    cb(null, true);
+  } else {
+    cb(new Error("Hanya file gambar yang diperbolehkan!"));
+  }
+
+  // Menampilkan informasi file di terminal
+  console.log("Nama file :", file.originalname);
+  console.log("MIME type :", file.mimetype);
+  console.log("Field     :", file.fieldname);
+};
+
+// Konfigurasi multer
+const upload = multer({
   storage,
+  fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024, // Maksimal 5MB
+    // Maksimal ukuran file 5 MB
+    fileSize: 5 * 1024 * 1024,
   },
-  fileFilter: (_req, file, cb) => {
-    if (file.mimetype.startsWith("image/")) {
-      cb(null, true);
-    } else {
-      cb(new Error("Hanya file gambar yang di perbolehkan!"));
-    }
-  },
-}).single("image"); //"image" adalah nama key fieldsaat upload file
+});
+
+// Upload satu file dengan field "image"
+export const uploadSingleImage = upload.single("image");
