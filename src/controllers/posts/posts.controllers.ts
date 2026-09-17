@@ -76,6 +76,61 @@ export class PostsController {
       });
     }
   };
+
+  // GET ALL POSTS
+  getPosts = async (req: Request, res: Response) => {
+    try {
+      const authorId = req.query.authorId ? Number(req.query.authorId) : null;
+
+      const conditions = [];
+
+      // Jika ada authorId, ambil post milik author tersebut
+      if (authorId) {
+        conditions.push(eq(postsTable.authorId, authorId));
+      } else {
+        conditions.push(eq(postsTable.status, "published"));
+      }
+
+      // Mengambil data posts dari database
+      const posts = await db
+        .select({
+          id: postsTable.id,
+          categoryId: postsTable.categoryId,
+          category: categoryTable.name,
+          title: postsTable.title,
+          content: postsTable.content,
+          status: postsTable.status,
+
+          authorId: postsTable.authorId,
+          author: usersTable.username,
+          imageProfile: usersTable.imageProfile,
+
+          imageUrl: postsTable.imageUrl,
+          createdAt: postsTable.createdAt,
+          updateAt: postsTable.updateAt,
+        })
+        .from(postsTable)
+        .leftJoin(categoryTable, eq(postsTable.categoryId, categoryTable.id))
+        .leftJoin(usersTable, eq(postsTable.authorId, usersTable.id))
+        .where(and(...conditions));
+
+      return res.status(200).json({
+        success: true,
+        message: "Berhasil mengambil data",
+        data: {
+          posts,
+        },
+      });
+    } catch (error) {
+      console.error("Get posts error:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Gagal mengambil data",
+        error: error instanceof Error ? error.message : error,
+      });
+    }
+  };
 }
 
 export default new PostsController();
