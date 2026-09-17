@@ -250,8 +250,30 @@ export class PostsController {
     }
   };
 
-  
+  // GET CATEGORIES
+  getCategories = async (req: Request, res: Response) => {
+    try {
+      // Mengambil semua category
+      const categories = await db.select().from(categoryTable);
 
+      return res.status(200).json({
+        success: true,
+        message: "Berhasil mengambil category",
+        data: {
+          categories,
+        },
+      });
+    } catch (error) {
+      console.error("Get categories error:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Gagal mengambil category",
+        error: error instanceof Error ? error.message : error,
+      });
+    }
+  };
+  
 }
 
 export default new PostsController();
