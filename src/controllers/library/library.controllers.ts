@@ -99,6 +99,35 @@ export class LibraryController {
       });
     }
   };
+
+  // CHECK LIKE
+  checkLike = async (req: Request, res: Response) => {
+    try {
+      const postId = Number(req.params.id);
+      const userId = Number(req.query.userId);
+
+      const result = await db
+        .select()
+        .from(likesTable)
+        .where(
+          and(eq(likesTable.userId, userId), eq(likesTable.postId, postId)),
+        );
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          liked: result.length > 0,
+        },
+      });
+    } catch (error) {
+      console.error("Check like error:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Gagal mengecek like",
+      });
+    }
+  };
 }
 
 export default new LibraryController();
