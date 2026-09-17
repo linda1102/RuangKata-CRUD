@@ -226,6 +226,30 @@ export class PostsController {
       });
     }
   };
+
+  // DELETE POST
+  deletePost = async (req: Request, res: Response) => {
+    try {
+      const id = Number(req.params.id);
+
+      // Menghapus post berdasarkan ID
+      await db.delete(postsTable).where(eq(postsTable.id, id));
+
+      return res.status(200).json({
+        success: true,
+        message: "Data berhasil dihapus",
+      });
+    } catch (error) {
+      console.error("Delete post error:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Gagal menghapus data",
+        error: error instanceof Error ? error.message : error,
+      });
+    }
+  };
+
 }
 
 export default new PostsController();
