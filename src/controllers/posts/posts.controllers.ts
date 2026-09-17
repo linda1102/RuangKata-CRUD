@@ -131,6 +131,58 @@ export class PostsController {
       });
     }
   };
+
+  // GET POST BY ID
+  getPostById = async (req: Request, res: Response) => {
+    try {
+      const id = Number(req.params.id);
+
+      // Mengambil post berdasarkan ID
+      const post = await db
+        .select({
+          id: postsTable.id,
+          categoryId: postsTable.categoryId,
+          category: categoryTable.name,
+          title: postsTable.title,
+          content: postsTable.content,
+          status: postsTable.status,
+
+          authorId: postsTable.authorId,
+          author: usersTable.username,
+          imageProfile: usersTable.imageProfile,
+
+          imageUrl: postsTable.imageUrl,
+          createdAt: postsTable.createdAt,
+          updateAt: postsTable.updateAt,
+        })
+        .from(postsTable)
+        .leftJoin(categoryTable, eq(postsTable.categoryId, categoryTable.id))
+        .leftJoin(usersTable, eq(postsTable.authorId, usersTable.id))
+        .where(eq(postsTable.id, id));
+
+      // Jika post tidak ditemukan
+      if (post.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: "Data tidak ditemukan",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Berhasil mengambil data",
+        data: post[0],
+      });
+    } catch (error) {
+      console.error("Get post by id error:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Gagal mengambil data",
+        error: error instanceof Error ? error.message : error,
+      });
+    }
+  };
 }
 
 export default new PostsController();
