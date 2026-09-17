@@ -248,6 +248,53 @@ export class LibraryController {
       });
     }
   };
+
+  
+  // LIBRARY - LIKED
+  getLikedPosts = async (req: Request, res: Response) => {
+    try {
+      const userId = Number(req.query.userId);
+
+      const posts = await db
+        .select({
+          id: postsTable.id,
+          categoryId: postsTable.categoryId,
+          category: categoryTable.name,
+          title: postsTable.title,
+          content: postsTable.content,
+          status: postsTable.status,
+
+          authorId: postsTable.authorId,
+          author: usersTable.username,
+          imageProfile: usersTable.imageProfile,
+
+          imageUrl: postsTable.imageUrl,
+          createdAt: postsTable.createdAt,
+          updateAt: postsTable.updateAt,
+        })
+        .from(likesTable)
+        .innerJoin(postsTable, eq(likesTable.postId, postsTable.id))
+        .leftJoin(categoryTable, eq(postsTable.categoryId, categoryTable.id))
+        .leftJoin(usersTable, eq(postsTable.authorId, usersTable.id))
+        .where(eq(likesTable.userId, userId));
+
+      return res.status(200).json({
+        success: true,
+        message: "Berhasil mengambil artikel yang disukai",
+        data: {
+          posts,
+        },
+      });
+    } catch (error) {
+      console.error("Get liked posts error:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Gagal mengambil artikel yang disukai",
+        error: error instanceof Error ? error.message : error,
+      });
+    }
+  };
 }
 
 export default new LibraryController();
