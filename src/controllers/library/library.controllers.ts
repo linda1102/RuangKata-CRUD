@@ -184,6 +184,38 @@ export class LibraryController {
       });
     }
   };
+   // UNSAVE POST
+  unsavePost = async (req: Request, res: Response) => {
+    try {
+      const postId = Number(req.params.id);
+      const userId = Number(req.query.userId);
+
+      await db
+        .delete(savedPostsTable)
+        .where(
+          and(
+            eq(savedPostsTable.userId, userId),
+            eq(savedPostsTable.postId, postId),
+          ),
+        );
+
+      return res.status(200).json({
+        success: true,
+        message: "Artikel dihapus dari simpanan",
+        data: {
+          saved: false,
+        },
+      });
+    } catch (error) {
+      console.error("Unsave post error:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Gagal menghapus simpanan",
+        error: error instanceof Error ? error.message : error,
+      });
+    }
+  };
 }
 
 export default new LibraryController();
