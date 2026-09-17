@@ -128,6 +128,62 @@ export class LibraryController {
       });
     }
   };
+
+  // SAVE POST
+  savePost = async (req: Request, res: Response) => {
+    try {
+      const postId = Number(req.params.id);
+      const userId = Number(req.body.userId);
+
+      if (!postId || !userId) {
+        return res.status(400).json({
+          success: false,
+          message: "postId dan userId wajib diisi",
+        });
+      }
+
+      const existingSave = await db
+        .select()
+        .from(savedPostsTable)
+        .where(
+          and(
+            eq(savedPostsTable.userId, userId),
+            eq(savedPostsTable.postId, postId),
+          ),
+        );
+
+      if (existingSave.length > 0) {
+        return res.status(200).json({
+          success: true,
+          message: "Artikel sudah disimpan",
+          data: {
+            saved: true,
+          },
+        });
+      }
+
+      await db.insert(savedPostsTable).values({
+        userId,
+        postId,
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: "Artikel berhasil disimpan",
+        data: {
+          saved: true,
+        },
+      });
+    } catch (error) {
+      console.error("Save post error:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Gagal menyimpan artikel",
+        error: error instanceof Error ? error.message : error,
+      });
+    }
+  };
 }
 
 export default new LibraryController();
