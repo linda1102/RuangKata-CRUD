@@ -62,6 +62,43 @@ export class LibraryController {
       });
     }
   };
+
+  // UNLIKE POST
+  unlikePost = async (req: Request, res: Response) => {
+    try {
+      const postId = Number(req.params.id);
+      const userId = Number(req.query.userId);
+
+      if (!postId || !userId) {
+        return res.status(400).json({
+          success: false,
+          message: "postId dan userId wajib diisi",
+        });
+      }
+
+      await db
+        .delete(likesTable)
+        .where(
+          and(eq(likesTable.userId, userId), eq(likesTable.postId, postId)),
+        );
+
+      return res.status(200).json({
+        success: true,
+        message: "Like berhasil dihapus",
+        data: {
+          liked: false,
+        },
+      });
+    } catch (error) {
+      console.error("Unlike post error:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Gagal menghapus like",
+        error: error instanceof Error ? error.message : error,
+      });
+    }
+  };
 }
 
 export default new LibraryController();
