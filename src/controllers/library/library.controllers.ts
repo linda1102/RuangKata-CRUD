@@ -184,7 +184,7 @@ export class LibraryController {
       });
     }
   };
-   // UNSAVE POST
+  // UNSAVE POST
   unsavePost = async (req: Request, res: Response) => {
     try {
       const postId = Number(req.params.id);
@@ -249,7 +249,6 @@ export class LibraryController {
     }
   };
 
-  
   // LIBRARY - LIKED
   getLikedPosts = async (req: Request, res: Response) => {
     try {
@@ -291,6 +290,52 @@ export class LibraryController {
       return res.status(500).json({
         success: false,
         message: "Gagal mengambil artikel yang disukai",
+        error: error instanceof Error ? error.message : error,
+      });
+    }
+  };
+
+  // LIBRARY - SAVED
+  getSavedPosts = async (req: Request, res: Response) => {
+    try {
+      const userId = Number(req.query.userId);
+
+      const posts = await db
+        .select({
+          id: postsTable.id,
+          categoryId: postsTable.categoryId,
+          category: categoryTable.name,
+          title: postsTable.title,
+          content: postsTable.content,
+          status: postsTable.status,
+
+          authorId: postsTable.authorId,
+          author: usersTable.username,
+          imageProfile: usersTable.imageProfile,
+
+          imageUrl: postsTable.imageUrl,
+          createdAt: postsTable.createdAt,
+          updateAt: postsTable.updateAt,
+        })
+        .from(savedPostsTable)
+        .innerJoin(postsTable, eq(savedPostsTable.postId, postsTable.id))
+        .leftJoin(categoryTable, eq(postsTable.categoryId, categoryTable.id))
+        .leftJoin(usersTable, eq(postsTable.authorId, usersTable.id))
+        .where(eq(savedPostsTable.userId, userId));
+
+      return res.status(200).json({
+        success: true,
+        message: "Berhasil mengambil artikel yang disimpan",
+        data: {
+          posts,
+        },
+      });
+    } catch (error) {
+      console.error("Get saved posts error:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Gagal mengambil artikel yang disimpan",
         error: error instanceof Error ? error.message : error,
       });
     }
