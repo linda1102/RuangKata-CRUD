@@ -216,6 +216,38 @@ export class LibraryController {
       });
     }
   };
+
+  // CHECK SAVE
+  checkSave = async (req: Request, res: Response) => {
+    try {
+      const postId = Number(req.params.id);
+      const userId = Number(req.query.userId);
+
+      const result = await db
+        .select()
+        .from(savedPostsTable)
+        .where(
+          and(
+            eq(savedPostsTable.userId, userId),
+            eq(savedPostsTable.postId, postId),
+          ),
+        );
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          saved: result.length > 0,
+        },
+      });
+    } catch (error) {
+      console.error("Check save error:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Gagal mengecek simpanan",
+      });
+    }
+  };
 }
 
 export default new LibraryController();
